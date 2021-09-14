@@ -27,6 +27,22 @@
             };
         </script>
 
+        <br><br><br>
+
+        {% if error %}<p><strong>{{ error }}</strong></p>{% endif %}
+
+        <form class="create" action="{% url 'web:index' %}" method="post">
+          {% csrf_token %}
+
+          <h3>Change Password</h3>
+          <div class="form-group">
+            <input type="text" id="password" name="password" placeholder="strong password" required><br>
+          </div>
+
+          <input class='btn btn-success' type="submit" value="Submit">
+
+        </form>
+
       </div>
     </div>
 

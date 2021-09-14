@@ -8,12 +8,28 @@ import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.contrib.auth.models import User
+
 # Create your views here.
 
 @login_required
 def index(request): # index
-    context = {}
-    return render(request, 'index.html', context)
+    if request.method == 'POST':
+        password = request.POST['password']
+
+        try:
+            user = User.objects.get(username=request.user.username)
+            user.set_password(password)
+            user.save()
+
+            context = {'error': 'changed password'}
+            return render(request, 'index.html', context)
+        except Exception as e:
+            context = {'error': e}
+            return render(request, 'index.html', context)
+
+    elif request.method == 'GET':
+        return render(request, 'index.html')
 
 @login_required
 def search(request, query): # index
