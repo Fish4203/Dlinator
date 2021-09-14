@@ -18,7 +18,7 @@ def index(request): # index
 @login_required
 def search(request, query): # index
     try:
-        response = requests.get(f'http://192.168.20.69:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
+        response = requests.get(f'http://{setings.JACKETT_IP}:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
 
         soup = BeautifulSoup(response.text, 'lxml')
         items = soup.findAll('item')
