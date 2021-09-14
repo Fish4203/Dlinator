@@ -7,6 +7,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
 # Create your views here.
 
 @login_required
@@ -16,82 +17,89 @@ def index(request): # index
 
 @login_required
 def search(request, query): # index
-    response = requests.get(f'http://192.168.20.69:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey=4om7len74vsi1phxdt65vtp06sq93nw6')
+    try:
+        response = requests.get(f'http://192.168.20.69:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
 
-    soup = BeautifulSoup(response.text, 'lxml')
-    items = soup.findAll('item')
+        soup = BeautifulSoup(response.text, 'lxml')
+        items = soup.findAll('item')
 
-    print(items)
+        #print(items)
 
-    results = []
-    for item in items:
-        # print('###################################')
-        # print(item)
-        # print(item.find('enclosure')['url'])
-        seeders = 0
-        for i in item.findAll('torznab:attr'):
-            if 'seeders' in str(i):
-                seeders = i['value']
+        results = []
+        for item in items:
+            # print('###################################')
+            # print(item)
+            # print(item.find('enclosure')['url'])
+            seeders = 0
+            for i in item.findAll('torznab:attr'):
+                if 'seeders' in str(i):
+                    seeders = i['value']
 
-        cat = int(int(item.find('category').text) / 1000)
-        if cat == 1:
-            cat = 'Console'
-        elif cat == 2:
-            cat = 'Movie'
-        elif cat == 3:
-            cat = 'Audio'
-        elif cat == 4:
-            cat = 'PC'
-        elif cat == 5:
-            cat = 'TV'
-        elif cat == 6:
-            cat = 'XXX'
-        else:
-            cat = 'Other'
+            cat = int(int(item.find('category').text) / 1000)
+            if cat == 1:
+                cat = 'Console'
+            elif cat == 2:
+                cat = 'Movie'
+            elif cat == 3:
+                cat = 'Audio'
+            elif cat == 4:
+                cat = 'PC'
+            elif cat == 5:
+                cat = 'TV'
+            elif cat == 6:
+                cat = 'XXX'
+            else:
+                cat = 'Other'
 
-        mag = item.find('enclosure')['url']
-
-
+            mag = item.find('enclosure')['url']
 
 
-        results.append({
-            'title': item.find('title').text,
-            'indexer': item.find('jackettindexer').text,
-            'site': item.select('guid')[0].text,
-            'date': item.select('pubdate')[0].text,
-            'size': str(int(item.select('size')[0].text) / 1000000000),
-            'mag': mag,
-            'category': cat,
-            'seeders': seeders,
-        })
 
-    context = {'results': results}
-    return render(request, 'search.html', context)
+
+            results.append({
+                'title': item.find('title').text,
+                'indexer': item.find('jackettindexer').text,
+                'site': item.select('guid')[0].text,
+                'date': item.select('pubdate')[0].text,
+                'size': str(int(item.select('size')[0].text) / 1000000000),
+                'mag': mag,
+                'category': cat,
+                'seeders': seeders,
+            })
+
+        context = {'results': results}
+        return render(request, 'search.html', context)
+    except Exception as e:
+        return render(request, 'blank.html', {'error': e})
+
 
 @login_required
 def add(request): # index
-    query = request.POST['query']
-    title = request.POST['title']
-    cat = request.POST['cat']
-    # print('###############')
-    # print(str(query))
-    if 'magnet' not in query:
-        try:
-            magSite = requests.get(query)
-        except Exception as e:
-            query = str(str(e)[39:])[:-1]
+    try:
+        query = request.POST['query']
+        title = request.POST['title']
+        cat = request.POST['cat']
+        # print('###############')
+        # print(str(query))
+        if 'magnet' not in query:
+            try:
+                magSite = requests.get(query)
+            except Exception as e:
+                query = str(str(e)[39:])[:-1]
 
-    # print('maggggggggggggggggg')
-    # print(query)
-    path = ''
+        # print('maggggggggggggggggg')
+        # print(query)
 
-    f = open(f'{path}{title}.magnet', 'w')
-    f.write(query)
-    f.close()
+        f = open(f'{settings.PATH_TO_WATCH}{title}.magnet', 'w')
+        f.write(query)
+        f.close()
 
-    context = {'title': title, 'loc': path, 'mag': query}
+        context = {'title': title, 'loc': settings.PATH_TO_WATCH, 'mag': query}
 
-    return render(request, 'done.html', context)
+        return render(request, 'done.html', context)
+    except Exception as e:
+        return render(request, 'blank.html', {'error': e})
+
 
 
 
