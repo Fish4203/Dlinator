@@ -10,35 +10,29 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 import os.path
-
+import json
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-import environ
-
-env = environ.Env(
-    # set casting, default value
-    DEBUG=(bool, False)
-)
-
-environ.Env.read_env(os.path.join(BASE_DIR, 'config.env'))
+with open('config.env', 'r') as f:
+    vars = json.load(f)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env('SECRET_KEY')
+SECRET_KEY = vars['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = vars['DEBUG']
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = vars['ALLOWED_HOSTS']
 
-JACKETT_IP = env('JACKETT_IP')
-JACKETT_TOKEN = env('JACKETT_TOKEN')
-PATH_TO_WATCH = env('PATH_TO_WATCH')
+JACKETT_IP = vars['JACKETT_IP']
+JACKETT_TOKEN = vars['JACKETT_TOKEN']
+PATH_TO_WATCH = vars['PATH_TO_WATCH']
 
 LOGIN_URL = 'web:signin'
 # Application definition

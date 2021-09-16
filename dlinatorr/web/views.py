@@ -34,7 +34,7 @@ def index(request): # index
 @login_required
 def search(request, query): # index
     try:
-        response = requests.get(f'http://{setings.JACKETT_IP}:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
+        response = requests.get(f'http://{settings.JACKETT_IP}:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
 
         soup = BeautifulSoup(response.text, 'lxml')
         items = soup.findAll('item')
@@ -53,19 +53,19 @@ def search(request, query): # index
 
             cat = int(int(item.find('category').text) / 1000)
             if cat == 1:
-                cat = 'Console'
+                cat = 'console'
             elif cat == 2:
-                cat = 'Movie'
+                cat = 'movies'
             elif cat == 3:
-                cat = 'Audio'
+                cat = 'audio'
             elif cat == 4:
-                cat = 'PC'
+                cat = 'games'
             elif cat == 5:
-                cat = 'TV'
+                cat = 'shows'
             elif cat == 6:
                 cat = 'XXX'
             else:
-                cat = 'Other'
+                cat = 'other'
 
             mag = item.find('enclosure')['url']
 
@@ -106,7 +106,7 @@ def add(request): # index
         # print('maggggggggggggggggg')
         # print(query)
 
-        f = open(f'{settings.PATH_TO_WATCH}{title}.magnet', 'w')
+        f = open(f'{settings.PATH_TO_WATCH}{cat}/{title}.magnet', 'w')
         f.write(query)
         f.close()
 
@@ -149,7 +149,7 @@ def new_account(request): # creates a new user function this shit is well writen
             new_user.save()
 
             context = 'sucsessfuly created new account'
-            return redirect('chat:index')#, error=context)
+            return redirect('web:index', context)#, error=context)
         except:
             context = {'error_message': 'could not created new account'}
             return render(request, 'new_account.html', context)
