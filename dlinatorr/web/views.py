@@ -9,7 +9,8 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.contrib.auth.models import User
-
+import qbittorrentapi
+from .models import Torrent
 # Create your views here.
 
 @login_required
@@ -29,12 +30,23 @@ def index(request): # index
             return render(request, 'index.html', context)
 
     elif request.method == 'GET':
-        return render(request, 'index.html')
+
+        torrs = Torrent.objects.all()
+        torrsli = []
+        for torr in torrs:
+            torrsli.append({
+                'title': torr.title,
+                'cat': torr.cat,
+                'date': torr.dateAdd,
+                'user': torr.user.username
+            })
+
+        return render(request, 'index.html', {'torrs': torrsli})
 
 @login_required
 def search(request, query): # index
     try:
-        response = requests.get(f'http://{settings.JACKETT_IP}:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
+        response = requests.get(f'http://{settings.IP}:9117/api/v2.0/indexers/all/results/torznab?t=search&q={query}&apikey={settings.JACKETT_TOKEN}')
 
         soup = BeautifulSoup(response.text, 'lxml')
         items = soup.findAll('item')
@@ -73,7 +85,7 @@ def search(request, query): # index
 
 
             results.append({
-                'title': item.find('title').text,
+                'title': str(item.find('title').text).replace('.', ' '),
                 'indexer': item.find('jackettindexer').text,
                 'site': item.select('guid')[0].text,
                 'date': item.select('pubdate')[0].text,
@@ -103,14 +115,30 @@ def add(request): # index
             except Exception as e:
                 query = str(str(e)[39:])[:-1]
 
-        # print('maggggggggggggggggg')
-        # print(query)
+        try:
+            qbt = qbittorrentapi.Client(host=settings.IP, port=8080, username='admin', password=settings.QBIT_PASS)
+            qbt.auth_log_in()
+        except qbittorrentapi.LoginFailed as e:
+            return render(request, 'blank.html', {'error': e})
 
-        f = open(f'{settings.PATH_TO_WATCH}{cat}/{title}.magnet', 'w')
-        f.write(query)
-        f.close()
+        if cat == 'shows':
+            folder = title.lower().split('season')[0].split(' s')[0]
+            print(folder)
+            while folder[-1] == ' ':
+                folder = folder[:-1]
 
-        context = {'title': title, 'loc': settings.PATH_TO_WATCH, 'mag': query}
+            qbt.torrents_add(urls=query, save_path=f'shows/{folder}')
+        else:
+            qbt.torrents_add(urls=query, save_path=f'{cat}')
+
+
+        user = User.objects.get(username=request.user.username)
+        torr = Torrent(title=title, magnet=query, cat=cat, user=user)
+        torr.save()
+
+
+
+        context = {'title': title, 'loc': f'{settings.SAVE_PATH}{cat}', 'mag': query}
 
         return render(request, 'done.html', context)
     except Exception as e:
@@ -148,8 +176,8 @@ def new_account(request): # creates a new user function this shit is well writen
             new_user.set_password(password)
             new_user.save()
 
-            context = 'sucsessfuly created new account'
-            return redirect('web:index', context)#, error=context)
+            context = {'error_message': 'Sucsessfully made new acount'}
+            return render(request, 'new_account.html', context)
         except:
             context = {'error_message': 'could not created new account'}
             return render(request, 'new_account.html', context)

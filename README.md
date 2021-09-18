@@ -10,12 +10,7 @@ it is written in Django
 Make a config.env file in the same folder as manage.py
 
 ```
-SECRET_KEY=put some this secure here
-DEBUG=False
-JACKETT_IP='address of the jacket server'
-JACKETT_TOKEN='the token you get from jackett'
-PATH_TO_WATCH='the absolute path to you watch folder'
-
+{ "SECRET_KEY":"key", "DEBUG": false, "JACKETT_IP": "192.168.???.???", "JACKETT_TOKEN":"token", "PATH_TO_WATCH":"", "ALLOWED_HOSTS":[]}
 
 
 ```

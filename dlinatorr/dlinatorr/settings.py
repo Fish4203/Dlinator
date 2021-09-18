@@ -30,14 +30,16 @@ DEBUG = vars['DEBUG']
 
 ALLOWED_HOSTS = vars['ALLOWED_HOSTS']
 
-JACKETT_IP = vars['JACKETT_IP']
+QBIT_PASS = vars['QBIT_PASS']
+IP = vars['IP']
 JACKETT_TOKEN = vars['JACKETT_TOKEN']
-PATH_TO_WATCH = vars['PATH_TO_WATCH']
+SAVE_PATH = vars['SAVE_PATH']
 
 LOGIN_URL = 'web:signin'
 # Application definition
 
 INSTALLED_APPS = [
+    'web',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
