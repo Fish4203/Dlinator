@@ -10,7 +10,6 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.contrib.auth.models import User
 import qbittorrentapi
-from .models import Torrent
 # Create your views here.
 
 @login_required
@@ -31,14 +30,22 @@ def index(request): # index
 
     elif request.method == 'GET':
 
-        torrs = Torrent.objects.all()
+        try:
+            qbt = qbittorrentapi.Client(host=settings.IP, port=8080, username='admin', password=settings.QBIT_PASS)
+            qbt.auth_log_in()
+        except qbittorrentapi.LoginFailed as e:
+            return render(request, 'blank.html', {'error': e})
+
+        qtorrs = qbt.torrents_info()
         torrsli = []
-        for torr in torrs:
+        for torr in qtorrs:
             torrsli.append({
-                'title': torr.title,
-                'cat': torr.cat,
-                'date': torr.dateAdd,
-                'user': torr.user.username
+                'title': torr.name,
+                'cat': torr.category,
+                'date': torr.added_on,
+                'progress': torr.progress * 100,
+                'size': torr.size / 1000000000,
+                'ratio': str(torr.ratio)[:4]
             })
 
         return render(request, 'index.html', {'torrs': torrsli})
@@ -127,15 +134,9 @@ def add(request): # index
             while folder[-1] == ' ':
                 folder = folder[:-1]
 
-            qbt.torrents_add(urls=query, save_path=f'shows/{folder}')
+            qbt.torrents_add(urls=query, save_path=f'shows/{folder}', category=cat)
         else:
-            qbt.torrents_add(urls=query, save_path=f'{cat}')
-
-
-        user = User.objects.get(username=request.user.username)
-        torr = Torrent(title=title, magnet=query, cat=cat, user=user)
-        torr.save()
-
+            qbt.torrents_add(urls=query, save_path=f'{cat}', category=cat)
 
 
         context = {'title': title, 'loc': f'{settings.SAVE_PATH}{cat}', 'mag': query}
