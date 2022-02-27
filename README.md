@@ -17,3 +17,5 @@ Make a config.env file in the same folder as manage.py
 
 
 then find some way to host the django server
+
+gunicorn dlinatorr.wsgi -b :8085 -D
